@@ -1,0 +1,17 @@
+.venv/
+.python/
+.uv-cache/
+__pycache__/
+build/
+*.spec
+settings.json*
+release_compact/
+test-artifacts/
+PromptCleaner_v2.0.py
+cleaner_config*.json*
+TEST_RESULTS.md
+.publish/
+dist/
+.env
+.env.*
+*.log
