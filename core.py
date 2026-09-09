@@ -118,6 +118,12 @@ def normalized(tag: str) -> str:
 
 def clean(text: str, rules: Rules | None = None) -> Report:
     rules = rules or Rules()
+    # Some booru tag lists use "?" between entries, for example
+    # "? 1girl 9672867? ahoge 942710? barefoot 619974".  Treat it as a
+    # delimiter only when the following entry has a large trailing count;
+    # ordinary question marks and ordinary numeric tags remain untouched.
+    if rules.tag_counts:
+        text = re.sub(r'\?(?=\s*[^?,\r\n]+?\s+\d{5,}(?=\?|$))', ',', text)
     tags, warnings = split_tags(text)
     blocked = {normalized(unweight(t)) for t in split_tags(rules.blacklist)[0]}
     result, removed, seen = [], [], set()
@@ -134,7 +140,7 @@ def clean(text: str, rules: Rules | None = None) -> Report:
         if rules.remove_weights: tag = unweight(tag)
         if rules.remove_chinese: tag = re.sub(r'[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\U00020000-\U0003134f]', '', tag)
         if rules.remove_excl: tag = re.sub(r'(?<!\\)[!?！？]', '', tag)
-        if rules.tag_counts: tag = re.sub(r'\s+(?:\(\d+\)|\[\d+\]|\d+(?:\.\d+)?[kKmM])$', '', tag)
+        if rules.tag_counts: tag = re.sub(r'\s+(?:\(\d+\)|\[\d+\]|\d{5,}|\d+(?:\.\d+)?[kKmM])$', '', tag)
         tag = tag.strip()
         key = tag.casefold() if re.search(r'<(?:lora|lyco|lycoris):', tag, re.I) else normalized(tag)
         reason = ''
