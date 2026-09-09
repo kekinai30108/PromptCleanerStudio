@@ -13,7 +13,10 @@ Third-party components retain their respective copyright and license terms.
 | PyInstaller (build tool) | 6.22.2 | GPL with bootloader exception | https://pyinstaller.org/en/stable/license.html |
 
 This source repository does not vendor these packages. Install them using the
-requirements files. When distributing a packaged executable, include the license
-texts supplied by the actual bundled Python, Tcl/Tk, TkDnD, Pillow and other
-runtime components, including any bundled native libraries. This source dependency
-inventory is not a complete binary-distribution license bundle.
+requirements files. The release ZIP includes the application LICENSE and the
+licenses/ directory. Keep these documents with redistributed copies.
+
+The license texts in licenses/ come from the bundled Python 3.12.13, Pillow
+12.3.0 wheel (including its native-library notices), tkinterdnd2 0.6.3,
+Tk 8.6.12, the Tcl 8.6.12 upstream license.terms, and the TkDnD 2.10.2
+tkdnd.tcl copyright header. When updating dependencies, refresh these notices.

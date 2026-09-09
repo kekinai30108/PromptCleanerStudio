@@ -2,6 +2,16 @@
 
 Windows 桌面提示詞工具，提供提示詞淨化、圖片生成資訊檢視與批次移除中繼資料。支援繁體中文／English、深色／淺色介面。
 
+## 下載 Windows 版
+
+[下載 v1.0.0（Windows x64 ZIP）](https://github.com/kekinai30108/PromptCleanerStudio/releases/download/v1.0.0/PromptCleanerStudio-v1.0.0-windows-x64.zip)
+
+解壓縮後執行 `PromptCleanerStudio.exe`，不需要安裝 Python。
+壓縮檔內含 EXE 與授權文件；再次散布時請保留授權文件。
+此版本尚未進行程式碼簽章。
+
+[發布說明與所有下載檔案](https://github.com/kekinai30108/PromptCleanerStudio/releases/tag/v1.0.0) · [最新發布版](https://github.com/kekinai30108/PromptCleanerStudio/releases/latest)
+
 ## 功能
 
 - 提示詞淨化：黑名單、去重、移除 LoRA／LyCORIS、強調權重、中文字元及尾端計數；支援複製與匯出 TXT。
