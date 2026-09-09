@@ -74,7 +74,7 @@ class App:
         self.last_output_dir: Path | None = None
         self.current_page = 0
         self.vars = {k: tk.BooleanVar(value=self.config[k]) for k in asdict(Rules()) if k != 'blacklist'}
-        root.title('Prompt Cleaner Studio v1.0.0')
+        root.title('Prompt Cleaner Studio v1.0.1')
         icon = Path(getattr(sys, '_MEIPASS', Path(__file__).parent)) / 'assets/PromptCleanerStudio.ico'
         if icon.exists(): root.iconbitmap(str(icon))
         self.chrome = WindowChrome(root, self.close)
@@ -87,7 +87,7 @@ class App:
         self.sidebar.pack(side='left', fill='y', padx=(0, 18))
         self.sidebar.pack_propagate(False)
         ttk.Label(self.sidebar, text='Prompt Cleaner', font=('Segoe UI', 17, 'bold')).pack(anchor='w', pady=(24, 2))
-        ttk.Label(self.sidebar, text='S T U D I O  ·  v1.0.0', style='Muted.TLabel', font=('Segoe UI', 9)).pack(anchor='w', pady=(0, 30))
+        ttk.Label(self.sidebar, text='S T U D I O  ·  v1.0.1', style='Muted.TLabel', font=('Segoe UI', 9)).pack(anchor='w', pady=(0, 30))
         self.nav = []
         for index, key in enumerate(('clean_page', 'image_page', 'batch_page')):
             self.nav.append(self.button(self.sidebar, key, lambda i=index: self.switch(i)))
