@@ -6,7 +6,7 @@ Windows 桌面工具，為 Stable Diffusion 使用者整理提示詞、檢視圖
 
 ## 下載
 
-[下載 Prompt Cleaner Studio v1.0.1（Windows x64）](https://github.com/kekinai30108/PromptCleanerStudio/releases/download/v1.0.1/PromptCleanerStudio-v1.0.1-windows-x64.zip)
+[下載 Prompt Cleaner Studio v1.0.2（Windows x64）](https://github.com/kekinai30108/PromptCleanerStudio/releases/download/v1.0.2/PromptCleanerStudio-v1.0.2-windows-x64.zip)
 
 下載 ZIP 後解壓縮，直接執行 `PromptCleanerStudio.exe` 即可，不需要安裝 Python。適用於 Windows x64。
 

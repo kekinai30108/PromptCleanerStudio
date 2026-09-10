@@ -118,12 +118,11 @@ def normalized(tag: str) -> str:
 
 def clean(text: str, rules: Rules | None = None) -> Report:
     rules = rules or Rules()
-    # Some booru tag lists use "?" between entries, for example
-    # "? 1girl 9672867? ahoge 942710? barefoot 619974".  Treat it as a
-    # delimiter only when the following entry has a large trailing count;
-    # ordinary question marks and ordinary numeric tags remain untouched.
-    if rules.tag_counts:
-        text = re.sub(r'\?(?=\s*[^?,\r\n]+?\s+\d{5,}(?=\?|$))', ',', text)
+    # Gelbooru copies use a standalone "?" before each tag/count pair, for
+    # example "? 1girl 9676799? ahoge 943224".  Preserve it as a separate
+    # token so the question-mark and trailing-count options work independently.
+    if rules.remove_excl or rules.tag_counts:
+        text = re.sub(r'\?(?=\s*[^?,\r\n]+?\s+\d{5,}(?=\?|$))', ', ?,', text)
     tags, warnings = split_tags(text)
     blocked = {normalized(unweight(t)) for t in split_tags(rules.blacklist)[0]}
     result, removed, seen = [], [], set()
