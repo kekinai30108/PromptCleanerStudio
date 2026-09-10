@@ -28,11 +28,13 @@ class WindowChrome:
         root.geometry(f'{width}x{height}+{max(left, left+(right-left-width)//2)}+{max(top, top+(bottom-top-height)//2)}')
         root.overrideredirect(True)
         self.bar = ttk.Frame(root)
-        self.bar.place(relx=1, x=-12, y=24, anchor='ne')
+        self.bar.pack(fill='x')
+        self.title = ttk.Label(self.bar, text=' Prompt Cleaner Studio · v1.0.2', style='Muted.TLabel', padding=(12, 10))
+        self.title.pack(side='left', fill='x', expand=True)
         for text, command in [('—', self.minimize), ('□', self.toggle_maximize), ('×', close)]:
             RoundedButton(self.bar, text=text, width=42, height=30, command=command,
-                          variant='danger' if text == '×' else 'normal').pack(side='left', padx=3)
-        for w in (self.bar,):
+                          variant='danger' if text == '×' else 'normal').pack(side='left', padx=3, pady=5)
+        for w in (self.bar, self.title):
             w.bind('<ButtonPress-1>', self.start_drag)
             w.bind('<B1-Motion>', self.drag)
             w.bind('<Double-Button-1>', lambda e: self.toggle_maximize())
