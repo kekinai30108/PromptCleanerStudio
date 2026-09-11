@@ -29,7 +29,7 @@ class WindowChrome:
         root.overrideredirect(True)
         self.bar = ttk.Frame(root)
         self.bar.pack(fill='x')
-        self.title = ttk.Label(self.bar, text=' Prompt Cleaner Studio · v1.0.3', style='Muted.TLabel', padding=(12, 10))
+        self.title = ttk.Label(self.bar, text=' Prompt Cleaner Studio · v1.0.4', style='Muted.TLabel', padding=(12, 10))
         self.title.pack(side='left', fill='x', expand=True)
         for text, command in [('—', self.minimize), ('□', self.toggle_maximize), ('×', close)]:
             RoundedButton(self.bar, text=text, width=42, height=30, command=command,
@@ -52,15 +52,28 @@ class WindowChrome:
         user.GetParent.argtypes = [ctypes.c_void_p]
         user.GetWindowLongW.argtypes = [ctypes.c_void_p, ctypes.c_int]
         user.SetWindowLongW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_long]
+        user.SetWindowPos.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int,
+                                     ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_uint]
+        user.ShowWindow.argtypes = [ctypes.c_void_p, ctypes.c_int]
         hwnd = user.GetParent(self.root.winfo_id())
+        if not hwnd: return
         style = user.GetWindowLongW(hwnd, -20)
-        user.SetWindowLongW(hwnd, -20, (style | 0x40000) & ~0x80)
+        new_style = (style | 0x40000) & ~0x80
+        if new_style == style: return
+        # Explorer needs a hide/show transition when a visible tool window
+        # becomes an app window. On startup this runs before deiconify.
+        visible = self.root.state() == 'normal' and self.root.winfo_ismapped()
+        if visible: user.ShowWindow(hwnd, 0)
+        user.SetWindowLongW(hwnd, -20, new_style)
+        user.SetWindowPos(hwnd, None, 0, 0, 0, 0, 0x37)
+        if visible: user.ShowWindow(hwnd, 4)
 
     def on_map(self, event: tk.Event) -> None:
-        if event.widget is self.root and self.restoring:
-            self.restoring = False
-            self.root.overrideredirect(True)
-            self.root.after(20, self.taskbar)
+        if event.widget is self.root:
+            if self.restoring:
+                self.restoring = False
+                self.root.overrideredirect(True)
+            self.root.after_idle(self.taskbar)
 
     def minimize(self) -> None:
         self.restoring = True

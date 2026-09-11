@@ -33,7 +33,7 @@ TEXT = {
     'history': ('本次歷史紀錄', 'Session history'), 'restore': ('還原選取紀錄', 'Restore selected'),
     'remove_lora': ('移除 LoRA / LyCORIS', 'Remove LoRA / LyCORIS'), 'remove_weights': ('移除強調權重', 'Remove emphasis weights'),
     'deduplicate': ('移除重複標籤', 'Remove duplicate tags'), 'remove_chinese': ('移除中文字元', 'Remove Chinese characters'),
-    'remove_excl': ('移除驚嘆號與問號', 'Remove ! and ?'), 'tag_counts': ('移除尾端計數', 'Remove trailing counts'),
+    'remove_excl': ('移除驚嘆號與問號', 'Remove ! and ?'),
     'open': ('選擇圖片', 'Select image'), 'recent': ('最近開啟', 'Recent images'), 'copy_meta': ('複製中繼資料', 'Copy metadata'),
     'add': ('加入圖片', 'Add images'), 'remove': ('移除選取', 'Remove selected'), 'start': ('建立乾淨 PNG 副本', 'Create clean PNG copies'),
     'batch_hint': ('輸出至來源同層 Cleaned_Output，自動編號、不覆寫原圖。可拖放多張圖片。', 'Saves to Cleaned_Output beside each source. Unique names; originals preserved. Drop images here.'),
@@ -74,7 +74,7 @@ class App:
         self.last_output_dir: Path | None = None
         self.current_page = 0
         self.vars = {k: tk.BooleanVar(value=self.config[k]) for k in asdict(Rules()) if k != 'blacklist'}
-        root.title('Prompt Cleaner Studio v1.0.3')
+        root.title('Prompt Cleaner Studio v1.0.4')
         icon = Path(getattr(sys, '_MEIPASS', Path(__file__).parent)) / 'assets/PromptCleanerStudio.ico'
         if icon.exists(): root.iconbitmap(str(icon))
         self.chrome = WindowChrome(root, self.close)
@@ -117,6 +117,7 @@ class App:
         if not self.root.winfo_exists():
             return
         self.root.update_idletasks()
+        self.chrome.taskbar()
         self.root.deiconify()
         self.root.lift()
         self.root.after(20, self.chrome.taskbar)
@@ -135,9 +136,9 @@ class App:
         self.labels.append((widget, key))
         return widget
 
-    def text_box(self, parent: tk.Misc, height: int = 8, readonly: bool = False) -> tk.Text:
+    def text_box(self, parent: tk.Misc, height: int = 8, readonly: bool = False, expand: bool = True) -> tk.Text:
         card = RoundedCard(parent, padding=8, surface='input')
-        card.pack(fill='both', expand=True, pady=6)
+        card.pack(fill='both', expand=expand, pady=6)
         frame = card.content
         text = tk.Text(frame, height=height, width=15, wrap='word', undo=not readonly, font=('Segoe UI', 10), relief='flat', padx=4, pady=4, highlightthickness=0)
         bar = ttk.Scrollbar(frame, command=text.yview)
@@ -165,7 +166,7 @@ class App:
         self.preset.pack(side='right')
         self.preset.bind('<<ComboboxSelected>>', self.set_preset)
         self.label(self.rules_card.content, 'blacklist', style='Muted.TLabel').pack(anchor='w', pady=(8, 0))
-        self.blacklist = self.text_box(self.rules_card.content, 2)
+        self.blacklist = self.text_box(self.rules_card.content, 4)
         self.blacklist.insert('1.0', self.config['blacklist'])
         options = ttk.Frame(self.rules_card.content)
         options.pack(fill='x', pady=(3, 0))
@@ -201,7 +202,7 @@ class App:
         self.history_box = ttk.Combobox(bottom, state='readonly', width=24)
         self.history_box.pack(side='right', padx=8)
         self.label(bottom, 'history', style='Muted.TLabel').pack(side='right', padx=6)
-        self.report = self.text_box(page, 2, readonly=True)
+        self.report = self.text_box(page, 2, readonly=True, expand=False)
 
     def build_image(self) -> None:
         page = self.pages[1]
@@ -296,7 +297,7 @@ class App:
     def translate(self) -> None:
         for widget, key in self.labels: widget.configure(text=self.t(key))
         index = self.preset.current()
-        self.preset.configure(values=['保留生成語法', '純文字標籤', '僅去除重複'] if self.config['lang'] == 'zh' else ['Preserve syntax', 'Plain text tags', 'Deduplicate only'])
+        self.preset.configure(values=['保留生成語法', '純文字標籤', '去除重複標籤'] if self.config['lang'] == 'zh' else ['Preserve syntax', 'Plain text tags', 'Deduplicate tags'])
         self.preset.current(max(0, index))
         self.lang_button.configure(text='語言  /  English' if self.config['lang'] == 'zh' else 'Language  /  繁體中文')
         target_theme = ('淺色外觀' if self.config['theme'] == 'dark' else '深色外觀') if self.config['lang'] == 'zh' else ('Light appearance' if self.config['theme'] == 'dark' else 'Dark appearance')
@@ -324,8 +325,7 @@ class App:
 
     def set_preset(self, event: object = None) -> None:
         index = self.preset.current()
-        for k, v in self.vars.items(): v.set(k == 'deduplicate' or index == 1 and k in ('remove_lora', 'remove_weights', 'remove_excl', 'tag_counts'))
-        if index == 2: self.blacklist.delete('1.0', 'end')
+        for k, v in self.vars.items(): v.set(k == 'deduplicate' or index == 1 and k in ('remove_lora', 'remove_weights', 'remove_excl'))
 
     @staticmethod
     def put(widget: tk.Text, text: str) -> None:

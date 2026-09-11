@@ -12,7 +12,6 @@ class Rules:
     deduplicate: bool = True
     remove_chinese: bool = False
     remove_excl: bool = False
-    tag_counts: bool = False
     blacklist: str = ""
 
 
@@ -120,19 +119,17 @@ def clean(text: str, rules: Rules | None = None) -> Report:
     rules = rules or Rules()
     # Gelbooru copies use a standalone "?" before each tag/count pair, for
     # example "? 1girl 9676799? ahoge 943224".  Preserve it as a separate
-    # token so the question-mark and trailing-count options work independently.
-    if rules.remove_excl or rules.tag_counts:
-        # A question-prefixed website row identifies its number as a count,
-        # even when it has fewer than five digits. Split before filtering so
-        # removing punctuation cannot merge adjacent rows.
-        def website_row(match: re.Match[str]) -> str:
-            count = '' if rules.tag_counts else ' ' + match['count']
-            return ', ?, ' + match['label'].strip() + count
+    # token so punctuation removal remains optional while counts are always removed.
+    # A question-prefixed website row identifies its number as a count,
+    # even when it has fewer than five digits. Split before filtering so
+    # removing punctuation cannot merge adjacent rows.
+    def website_row(match: re.Match[str]) -> str:
+        return ', ?, ' + match['label'].strip()
 
-        text = re.sub(
-            r'(?<!\\)\?\s*(?P<label>[^?！!,:\[\]{}<>\r\n]+?)'
-            r'\s+(?P<count>\d+(?:\.\d+)?[kKmM]?)[ \t]*(?=\?|,|\r|\n|$)',
-            website_row, text)
+    text = re.sub(
+        r'(?<!\\)\?\s*(?P<label>[^?！!,:\[\]{}<>\r\n]+?)'
+        r'\s+(?P<count>\d+(?:\.\d+)?[kKmM]?)[ \t]*(?=\?|,|\r|\n|$)',
+        website_row, text)
     tags, warnings = split_tags(text)
     blocked = {normalized(unweight(t)) for t in split_tags(rules.blacklist)[0]}
     result, removed, seen = [], [], set()
@@ -149,13 +146,17 @@ def clean(text: str, rules: Rules | None = None) -> Report:
         if rules.remove_weights: tag = unweight(tag)
         if rules.remove_chinese: tag = re.sub(r'[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\U00020000-\U0003134f]', '', tag)
         if rules.remove_excl: tag = re.sub(r'(?<!\\)[!?！？]', '', tag)
-        if rules.tag_counts: tag = re.sub(r'\s+(?:\(\d+\)|\[\d+\]|\d{5,}|\d+(?:\.\d+)?[kKmM])$', '', tag)
+        # Strip separate count tokens before blacklist/deduplication. Numbers
+        # inside weights, schedules, LoRA syntax or words remain untouched.
+        tag = re.sub(r'\s+(?:\(\d+\)|\[\d+\]|\d+|\d+(?:\.\d+)?[kKmM])(?=[!?！？]*$)', '', tag)
+        tag = re.sub(r'^\d+(?=[!?！？]*$)', '', tag)
+        if rules.remove_weights: tag = unweight(tag.strip())
         tag = tag.strip()
         key = tag.casefold() if re.search(r'<(?:lora|lyco|lycoris):', tag, re.I) else normalized(tag)
         reason = ''
         if not tag: reason = 'Filtered / 規則移除'
         elif normalized(unweight(tag)) in blocked: reason = 'Blacklist / 黑名單'
-        elif rules.deduplicate and key in seen: reason = 'Duplicate / 重複'
+        elif rules.deduplicate and key in seen and not re.fullmatch(r'[!?！？]+', tag): reason = 'Duplicate / 重複'
         if reason: removed.append((original, reason))
         else:
             result.append(tag)

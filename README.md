@@ -6,7 +6,7 @@ Windows 桌面工具，為 Stable Diffusion 使用者整理提示詞、檢視圖
 
 ## 下載
 
-[下載 Prompt Cleaner Studio v1.0.3（Windows x64）](https://github.com/kekinai30108/PromptCleanerStudio/releases/download/v1.0.3/PromptCleanerStudio-v1.0.3-windows-x64.zip)
+[下載 Prompt Cleaner Studio v1.0.4（Windows x64）](https://github.com/kekinai30108/PromptCleanerStudio/releases/download/v1.0.4/PromptCleanerStudio-v1.0.4-windows-x64.zip)
 
 下載 ZIP 後解壓縮，直接執行 `PromptCleanerStudio.exe` 即可，不需要安裝 Python。適用於 Windows x64。
 
@@ -26,6 +26,8 @@ Windows 桌面工具，為 Stable Diffusion 使用者整理提示詞、檢視圖
 2. 視需要輸入黑名單，或勾選要套用的規則。
 3. 按「執行淨化」，再按「複製結果」或匯出 TXT。
 
+尾端計數固定自動清理，黑名單會在計數清理後比對。「移除驚嘆號與問號」可獨立切換；未勾選時保留每個獨立符號。切換預設規則不會清空黑名單。
+
 ### 檢視圖片生成資訊
 
 1. 切換到「圖片資訊」。
@@ -33,6 +35,8 @@ Windows 桌面工具，為 Stable Diffusion 使用者整理提示詞、檢視圖
 3. 在右側查看正向／負向提示詞、LoRA 與生成參數。
 
 PNG 通常保留較完整的資料；JPEG 與 WebP 能否解析，取決於產圖工具是否將生成資訊寫入圖片。
+
+![圖片資訊介面](docs/images/image-inspector.png)
 
 ### 批次移除中繼資料
 
@@ -46,6 +50,7 @@ PNG 通常保留較完整的資料；JPEG 與 WebP 能否解析，取決於產�
 
 ## 注意事項
 
+- 獨立純數字與標籤尾端的整數會自動移除；權重、生成語法及 `1girl`、`4k` 等標籤會保留。
 - 網頁來源若提供縮圖、移除生成資訊、要求登入，或使用 `blob:`／`data:` 網址，可能無法解析。
 - 批次清理只處理靜態 PNG、JPEG 與 WebP；不會移除圖片像素中的文字或浮水印。
 - EXE 尚未進行程式碼簽章。
