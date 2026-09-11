@@ -7,16 +7,28 @@ from PIL import Image, ImageDraw, ImageTk
 
 
 def rounded(canvas: tk.Canvas, box_width: int, box_height: int, radius: int, **kwargs: object) -> int:
-    """Supersample only the control surface for smooth, true circular corners."""
+    """Cache antialiased corners; stretch native canvas fills, not a large bitmap."""
     w, h = max(2, box_width), max(2, box_height)
     scale = 2
-    bitmap = Image.new('RGB', (w*scale, h*scale), canvas.cget('bg'))
-    ImageDraw.Draw(bitmap).rounded_rectangle((1, 1, w*scale-2, h*scale-2),
-                                             radius=min(radius, w//2, h//2)*scale,
-                                             fill=kwargs.get('fill'), outline=kwargs.get('outline'), width=scale)
-    bitmap = bitmap.resize((w, h), Image.Resampling.LANCZOS)
-    canvas.surface_image = ImageTk.PhotoImage(bitmap, master=canvas)
-    return canvas.create_image(0, 0, anchor='nw', image=canvas.surface_image)
+    r = min(radius, w//2, h//2)
+    fill, outline = kwargs.get('fill'), kwargs.get('outline')
+    key = (r, canvas.cget('bg'), fill, outline)
+    if getattr(canvas, '_corner_key', None) != key:
+        bitmap = Image.new('RGB', (r*4, r*4), key[1])
+        ImageDraw.Draw(bitmap).rounded_rectangle((1, 1, r*4-2, r*4-2),
+                                                 radius=r*scale, fill=fill,
+                                                 outline=outline, width=scale)
+        bitmap = bitmap.resize((r*2, r*2), Image.Resampling.LANCZOS)
+        canvas._corners = [ImageTk.PhotoImage(bitmap.crop(box), master=canvas) for box in
+                           ((0, 0, r, r), (r, 0, 2*r, r), (0, r, r, 2*r), (r, r, 2*r, 2*r))]
+        canvas._corner_key = key
+    center = canvas.create_rectangle(r, 0, w-r, h, fill=fill, width=0)
+    canvas.create_rectangle(0, r, w, h-r, fill=fill, width=0)
+    for box in ((r, 0, w-r, 1), (r, h-1, w-r, h), (0, r, 1, h-r), (w-1, r, w, h-r)):
+        canvas.create_rectangle(*box, fill=outline or fill, width=0)
+    for image, (x, y) in zip(canvas._corners, ((0, 0), (w-r, 0), (0, h-r), (w-r, h-r))):
+        canvas.create_image(x, y, anchor='nw', image=image)
+    return center
 
 
 class RoundedButton(tk.Canvas):
@@ -74,6 +86,10 @@ class RoundedButton(tk.Canvas):
 
     def draw(self) -> None:
         if not self.palette: return
+        signature = (self.winfo_width(), self.winfo_height(), self.text, self.variant,
+                     self.disabled, self.hover, self.focused, self.surface, tuple(self.palette.items()))
+        if getattr(self, '_draw_signature', None) == signature: return
+        self._draw_signature = signature
         p = self.palette
         self.delete('all')
         fill = p['hover'] if self.hover and not self.disabled else p['button']
@@ -110,6 +126,9 @@ class RoundedCard(tk.Frame):
 
     def draw(self) -> None:
         if not self.palette: return
+        signature = (self.winfo_width(), self.winfo_height(), self.back.cget('bg'), tuple(self.palette.items()))
+        if getattr(self, '_draw_signature', None) == signature: return
+        self._draw_signature = signature
         self.back.delete('all')
         rounded(self.back, self.winfo_width(), self.winfo_height(), 18,
                 fill=self.palette[self.surface_key], outline=self.palette['border'])

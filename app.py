@@ -68,6 +68,8 @@ class App:
         self.busy = False
         self.image_request = 0
         self.preview: Image.Image | None = None
+        self.preview_resize_id = None
+        self.preview_cache_key = None
         self.metadata: dict[str, str] = {}
         self.raw_metadata = ''
         self.raw_metadata_truncated = False
@@ -225,7 +227,7 @@ class App:
         self.canvas = tk.Canvas(self.preview_frame, width=260, height=180, highlightthickness=0, cursor='hand2')
         self.canvas.grid(row=0, column=0, sticky='nsew')
         self.canvas.bind('<Button-1>', lambda e: self.open_image())
-        self.canvas.bind('<Configure>', lambda e: self.draw_preview())
+        self.canvas.bind('<Configure>', self.schedule_preview)
         self.label(left, 'drop_support', style='Muted.TLabel', wraplength=280).pack(anchor='w', pady=(8, 6))
         zoom_row = ttk.Frame(left)
         zoom_row.pack(fill='x')
@@ -464,8 +466,20 @@ class App:
             except Exception as exc: events.put(('image_error', request, str(exc)))
         threading.Thread(target=worker, daemon=True).start()
 
+    def schedule_preview(self, event: tk.Event) -> None:
+        # Keep the current image centered while waiting for the resize burst to end.
+        for item in self.canvas.find_all():
+            self.canvas.coords(item, self.canvas.winfo_width()/2, self.canvas.winfo_height()/2)
+        if self.preview_resize_id is not None:
+            self.root.after_cancel(self.preview_resize_id)
+        self.preview_resize_id = self.root.after(100, self.draw_preview)
+
     def draw_preview(self) -> None:
+        if self.preview_resize_id is not None:
+            self.root.after_cancel(self.preview_resize_id)
+            self.preview_resize_id = None
         if self.preview is None:
+            self.preview_cache_key = None
             self.canvas.delete('all')
             self.canvas.create_text(max(130, self.canvas.winfo_width()/2), max(70, self.canvas.winfo_height()/2),
                                     text=self.t('drop_empty'), fill=theme.PALETTES[self.config['theme']]['muted'],
@@ -475,7 +489,10 @@ class App:
         canvas_height = max(self.canvas.winfo_height(), 100)
         scale = min(canvas_width/self.preview.width, canvas_height/self.preview.height) * self.zoom.get()
         size = max(1, int(self.preview.width*scale)), max(1, int(self.preview.height*scale))
-        self.photo = ImageTk.PhotoImage(self.preview.resize(size, Image.Resampling.LANCZOS))
+        key = (id(self.preview), size)
+        if self.preview_cache_key != key:
+            self.photo = ImageTk.PhotoImage(self.preview.resize(size, Image.Resampling.LANCZOS))
+            self.preview_cache_key = key
         self.canvas.delete('all')
         self.canvas.create_image(canvas_width/2, canvas_height/2, image=self.photo, anchor='center')
         self.zoom_label.configure(text=f'{self.zoom.get():.0%}')
@@ -597,6 +614,10 @@ class App:
             return
         self.persist()
         self.root.after_cancel(self.poll_id)
+        if self.preview_resize_id is not None:
+            self.root.after_cancel(self.preview_resize_id)
+        if self.chrome.resize_id is not None:
+            self.root.after_cancel(self.chrome.resize_id)
         self.root.destroy()
 
 

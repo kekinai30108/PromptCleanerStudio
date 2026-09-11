@@ -22,6 +22,8 @@ class WindowChrome:
         self.maximized = False
         self.restoring = False
         self.drag_origin: tuple[int, int, int, int] | None = None
+        self.resize_id = None
+        self.pending_size = None
         root.minsize(1100, 760)
         left, top, right, bottom = work_area()
         width, height = max(1100, min(1280, right-left-60)), max(760, min(880, bottom-top-60))
@@ -42,6 +44,7 @@ class WindowChrome:
         self.grip.pack(side='bottom', fill='x')
         self.grip.bind('<ButtonPress-1>', self.start_resize)
         self.grip.bind('<B1-Motion>', self.resize)
+        self.grip.bind('<ButtonRelease-1>', self.finish_resize)
         root.bind('<Map>', self.on_map, add='+')
         root.after(100, self.taskbar)
 
@@ -103,4 +106,20 @@ class WindowChrome:
     def resize(self, event: tk.Event) -> None:
         if not self.maximized:
             x, y, w, h = self.resize_origin
-            self.root.geometry(f'{max(1100, w+event.x_root-x)}x{max(760, h+event.y_root-y)}')
+            self.pending_size = max(1100, w+event.x_root-x), max(760, h+event.y_root-y)
+            if self.resize_id is None:
+                self.resize_id = self.root.after(16, self.apply_resize)
+
+    def apply_resize(self) -> None:
+        self.resize_id = None
+        if self.pending_size and not self.maximized:
+            w, h = self.pending_size
+            self.pending_size = None
+            if (w, h) != (self.root.winfo_width(), self.root.winfo_height()):
+                self.root.geometry(f'{w}x{h}')
+
+    def finish_resize(self, event: tk.Event) -> None:
+        self.resize(event)
+        if self.resize_id is not None:
+            self.root.after_cancel(self.resize_id)
+        self.apply_resize()
