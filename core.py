@@ -122,7 +122,17 @@ def clean(text: str, rules: Rules | None = None) -> Report:
     # example "? 1girl 9676799? ahoge 943224".  Preserve it as a separate
     # token so the question-mark and trailing-count options work independently.
     if rules.remove_excl or rules.tag_counts:
-        text = re.sub(r'\?(?=\s*[^?,\r\n]+?\s+\d{5,}(?=\?|$))', ', ?,', text)
+        # A question-prefixed website row identifies its number as a count,
+        # even when it has fewer than five digits. Split before filtering so
+        # removing punctuation cannot merge adjacent rows.
+        def website_row(match: re.Match[str]) -> str:
+            count = '' if rules.tag_counts else ' ' + match['count']
+            return ', ?, ' + match['label'].strip() + count
+
+        text = re.sub(
+            r'(?<!\\)\?\s*(?P<label>[^?！!,:\[\]{}<>\r\n]+?)'
+            r'\s+(?P<count>\d+(?:\.\d+)?[kKmM]?)[ \t]*(?=\?|,|\r|\n|$)',
+            website_row, text)
     tags, warnings = split_tags(text)
     blocked = {normalized(unweight(t)) for t in split_tags(rules.blacklist)[0]}
     result, removed, seen = [], [], set()

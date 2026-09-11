@@ -29,7 +29,7 @@ class WindowChrome:
         root.overrideredirect(True)
         self.bar = ttk.Frame(root)
         self.bar.pack(fill='x')
-        self.title = ttk.Label(self.bar, text=' Prompt Cleaner Studio · v1.0.2', style='Muted.TLabel', padding=(12, 10))
+        self.title = ttk.Label(self.bar, text=' Prompt Cleaner Studio · v1.0.3', style='Muted.TLabel', padding=(12, 10))
         self.title.pack(side='left', fill='x', expand=True)
         for text, command in [('—', self.minimize), ('□', self.toggle_maximize), ('×', close)]:
             RoundedButton(self.bar, text=text, width=42, height=30, command=command,

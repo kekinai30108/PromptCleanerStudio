@@ -74,7 +74,7 @@ class App:
         self.last_output_dir: Path | None = None
         self.current_page = 0
         self.vars = {k: tk.BooleanVar(value=self.config[k]) for k in asdict(Rules()) if k != 'blacklist'}
-        root.title('Prompt Cleaner Studio v1.0.2')
+        root.title('Prompt Cleaner Studio v1.0.3')
         icon = Path(getattr(sys, '_MEIPASS', Path(__file__).parent)) / 'assets/PromptCleanerStudio.ico'
         if icon.exists(): root.iconbitmap(str(icon))
         self.chrome = WindowChrome(root, self.close)
